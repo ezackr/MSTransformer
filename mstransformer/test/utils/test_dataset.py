@@ -6,8 +6,13 @@ def test_musdb():
     # Subsequent tests should run in < 45 secs.
     musdb = MUSDBDataset(download=True, samples_per_track=1, duration=1.0)
     for x, y in musdb:
+        assert x.shape == y.shape
+        # default sampling frequency for MUSDB is 44.1 kHz.
         assert x.shape[-1] == 44100
 
 
 def test_load_dataset():
-    _, _ = load_dataset(download=True)
+    num_samples = 32
+    train_dataset, validation_dataset = load_dataset(download=True, samples_per_track=num_samples)
+    assert len(train_dataset) == 80 * num_samples
+    assert len(validation_dataset) == 14 * num_samples

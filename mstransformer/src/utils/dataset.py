@@ -84,24 +84,24 @@ class MUSDBDataset(Dataset):
             return self._get_val_item(track)
 
     def __len__(self):
-        return len(self.mus.tracks)
+        return len(self.mus.tracks) * self.samples_per_track
 
 
 def load_dataset(
         target: str = 'vocals',
         root: str = None,
-        download: bool = False,
-        is_wav: bool = False,
         subsets: str = 'train',
+        is_wav: bool = False,
+        download: bool = False,
         duration: Optional[float] = 6.0,
         samples_per_track: int = 64
 ) -> Tuple[MUSDBDataset, MUSDBDataset]:
     train_dataset = MUSDBDataset(
         target=target,
         root=root,
-        download=download,
-        is_wav=is_wav,
         subsets=subsets,
+        is_wav=is_wav,
+        download=download,
         split='train',
         duration=duration,
         samples_per_track=samples_per_track
@@ -109,9 +109,9 @@ def load_dataset(
     validation_dataset = MUSDBDataset(
         target=target,
         root=root,
-        download=download,
-        is_wav=is_wav,
         subsets=subsets,
+        is_wav=is_wav,
+        download=download,
         split='valid',
         duration=duration,
         samples_per_track=samples_per_track
