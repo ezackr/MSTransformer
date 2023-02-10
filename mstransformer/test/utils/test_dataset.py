@@ -13,6 +13,6 @@ def test_musdb():
 
 def test_load_dataset():
     num_samples = 32
-    train_dataset, validation_dataset = load_dataset(download=True, samples_per_track=num_samples)
+    train_dataset, val_dataset = load_dataset(download=True, samples_per_track=num_samples)
     assert len(train_dataset) == 80 * num_samples
-    assert len(validation_dataset) == 14 * num_samples
+    assert len(val_dataset) == 14 * num_samples

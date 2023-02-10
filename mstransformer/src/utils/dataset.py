@@ -1,3 +1,5 @@
+# Custom Dataset class for model training using MUSDB18.
+
 from typing import Optional, Tuple
 
 import musdb
@@ -8,17 +10,30 @@ from torch.utils.data import Dataset
 
 class MUSDBDataset(Dataset):
     """
-    Description.
+    PyTorch Dataset for MUSDB18 mixed source dataset. Randomly creates
+    `samples_per_track` many mixtures per track in MUSDB18 by sampling each
+    source and creating a new mixture. Returns the new mixture, x, and the
+    target source, y.
 
     Parameters:
-        - target:
-        - root:
-        - subsets:
-        - is_wav:
-        - download:
-        - split:
-        - duration:
-        - samples_per_track:
+        - target (str): target source ('drums', 'bass', 'other', 'vocals').
+            Default: 'vocals'.
+        - root (str): musdb root path. If set to None, it will be read from
+            MUSDB_PATH environment variable.
+            Default: None.
+        - subsets (str): which musdb dataset to load ('train' or 'test').
+            Default: 'train'
+        - is_wav (bool): if sources are represented by wav files.
+            Default: False.
+        - download (bool): if 7s musdb samples should be downloaded.
+            Default: False.
+        - split (str): if `subsets = 'train'`, then `split` determines
+            whether to load training or validation data.
+            Default: 'train'.
+        - duration (float): length of training samples.
+            Default: None (loads full audio track).
+        - samples_per_track (int): the number of mixture created per track.
+            Default: 64
     """
     def __init__(
             self,
@@ -39,7 +54,6 @@ class MUSDBDataset(Dataset):
             split=split,
         )
         self.target = target
-        self.is_wav = is_wav
         self.subsets = subsets
         self.split = split
         self.duration = duration
@@ -96,6 +110,10 @@ def load_dataset(
         duration: Optional[float] = 6.0,
         samples_per_track: int = 64
 ) -> Tuple[MUSDBDataset, MUSDBDataset]:
+    """
+    Creates a test and validation MUSDBDataset using the provided
+    parameters (see above class for further detail).
+    """
     train_dataset = MUSDBDataset(
         target=target,
         root=root,
@@ -106,7 +124,7 @@ def load_dataset(
         duration=duration,
         samples_per_track=samples_per_track
     )
-    validation_dataset = MUSDBDataset(
+    val_dataset = MUSDBDataset(
         target=target,
         root=root,
         subsets=subsets,
@@ -116,4 +134,4 @@ def load_dataset(
         duration=duration,
         samples_per_track=samples_per_track
     )
-    return train_dataset, validation_dataset
+    return train_dataset, val_dataset
