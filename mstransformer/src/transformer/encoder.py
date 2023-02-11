@@ -21,16 +21,16 @@ class EncoderBlock(nn.Module):
         self.norm1 = nn.LayerNorm(normalized_shape=d_model)
         self.dropout1 = nn.Dropout(p=dropout)
         self.feedforward = nn.Sequential(
-            nn.Linear(d_model, d_model * 8),
+            nn.Linear(d_model, 64),
             nn.ReLU(),
-            nn.Linear(d_model * 8, d_model)
+            nn.Linear(64, d_model)
         )
         self.norm2 = nn.LayerNorm(normalized_shape=d_model)
         self.dropout2 = nn.Dropout(p=dropout)
 
     def forward(self, x):
-        x_attn = self.norm1(x + self.dropout1(self.attention(x, x, x)))
-        x_out = self.norm2(x_attn + self.dropout2(self.feedforward(x_attn)))
+        x_attn = self.dropout1(self.norm1(x + self.attention(x, x, x)[0]))
+        x_out = self.dropout2(self.norm2(x_attn + self.feedforward(x_attn)))
         return x_out
 
 
@@ -40,7 +40,7 @@ class Encoder(nn.Module):
 
     Parameters:
         - num_layers (int): number of encoder blocks.
-        - num_channels (int): dimension of input.
+        - d_model (int): dimension of input.
         - num_heads (int): number of attention heads.
         - max_len (int): length of the input sequence.
         - dropout (float): dropout probability.
@@ -48,15 +48,15 @@ class Encoder(nn.Module):
     def __init__(
             self,
             num_layers=6,
-            num_channels=2,
+            d_model=512,
             num_heads=8,
-            max_len=220500,
+            max_len=512,
             dropout=0.0
     ):
         super(Encoder, self).__init__()
-        self.positional_encoding = PositionalEncoding(max_len, num_channels)
+        self.positional_encoding = PositionalEncoding(max_len, d_model)
         self.blocks = [
-            EncoderBlock(num_channels, num_heads, dropout)
+            EncoderBlock(d_model, num_heads, dropout)
             for _ in range(num_layers)
         ]
 
