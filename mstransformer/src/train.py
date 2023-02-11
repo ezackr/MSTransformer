@@ -28,22 +28,38 @@ def complex_norm(spec):
     return torch.abs(torch.view_as_complex(spec))
 
 
-def train():
-    print(f'----- loading dataset:')
-    train_loader, val_loader = get_dataloader()
-
-    stft, _ = get_fourier_transforms()
+def train(
+    target: str = 'vocals',
+    root: str = None,
+    subsets: str = 'train',
+    is_wav: bool = False,
+    download: bool = True,
+    duration: float = 2.0,
+    samples_per_track: int = 16,
+    batch_size: int = 32,
+    sample_rate: float = 44100.0,
+    hidden_dim: int = 512,
+    num_epochs: int = 5,
+):
+    print(f'Loading Dataset:')
+    train_loader, val_loader = get_dataloader(
+        target, root, subsets, is_wav, download,
+        duration, samples_per_track, batch_size
+    )
+    stft, _ = get_fourier_transforms(n_fft=2048, hop_length=512)
 
     count = 0
     for x, y in train_loader:
-        if count > 3:
+        if count >= 3:
             break
-        x_enc = stft(x)
-        x_enc = complex_norm(x_enc)
-        print(x_enc.shape)
+        x_spec = stft(x)
+        x_spec = complex_norm(x_spec)
+        print(x_spec.shape)
 
         count += 1
 
 
 if __name__ == '__main__':
-    train()
+    train(
+
+    )

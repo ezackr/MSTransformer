@@ -11,7 +11,7 @@ class PositionalEncoding(nn.Module):
     "Attention Is All You Need".
     """
 
-    def __init__(self, seq_len=441000, d_model=2):
+    def __init__(self, seq_len=512, d_model=2):
         super(PositionalEncoding, self).__init__()
 
         pe = torch.zeros(seq_len, d_model, dtype=torch.float)
