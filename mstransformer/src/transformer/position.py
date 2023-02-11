@@ -1,10 +1,10 @@
 import math
 
 import torch
-from torch.nn import Module
+from torch import nn
 
 
-class PositionalEncoding(Module):
+class PositionalEncoding(nn.Module):
     """
     Applies Positional Encoding to each position in a sequence, where
     `dim_model = num_channels = 2`. Uses encoding proposed in
