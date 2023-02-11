@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from mstransformer.src.utils import ComplexNorm
 from mstransformer.src.utils import load_dataset, get_fourier_transforms
 
 
@@ -25,19 +24,25 @@ def get_dataloader(
     return train_loader, val_loader
 
 
-def get_spec_enc(device=None):
-    stft, _ = get_fourier_transforms()
-    spec_enc = nn.Sequential(
-        stft,
-        ComplexNorm()
-    ).to(device)
-    return spec_enc
+def complex_norm(spec):
+    return torch.abs(torch.view_as_complex(spec))
 
 
 def train():
     print(f'----- loading dataset:')
     train_loader, val_loader = get_dataloader()
-    spec_enc = get_spec_enc()
+
+    stft, _ = get_fourier_transforms()
+
+    count = 0
+    for x, y in train_loader:
+        if count > 3:
+            break
+        x_enc = stft(x)
+        x_enc = complex_norm(x_enc)
+        print(x_enc.shape)
+
+        count += 1
 
 
 if __name__ == '__main__':

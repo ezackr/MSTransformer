@@ -49,7 +49,7 @@ class ISTFT(nn.Module):
         self.window = nn.Parameter(torch.hann_window(n_fft), requires_grad=False)
 
     def forward(self, x, length=None):
-        # x.shape == (num_samples, num_bind, num_frames, 2)
+        # x.shape == (num_samples, num_bins, num_frames, 2)
         x_out = x.view(-1, x.shape[-3], x.shape[-2], x.shape[-1])
         x_out = torch.istft(
             torch.view_as_complex(x_out),
@@ -64,18 +64,6 @@ class ISTFT(nn.Module):
         x_out = x_out.view(x.shape[:-3] + x_out.shape[-1:])
         # x_out.shape == (num_samples, seq_len)
         return x_out
-
-
-class ComplexNorm(nn.Module):
-    def __init__(self, mono: bool = True):
-        super(ComplexNorm, self).__init__()
-        self.mono = mono
-
-    def forward(self, x):
-        spec = torch.abs(torch.view_as_complex(x))
-        if self.mono:
-            spec = torch.mean(spec, dim=1, keepdim=True)
-        return spec
 
 
 def get_fourier_transforms(
