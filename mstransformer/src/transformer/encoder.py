@@ -15,11 +15,12 @@ class EncoderBlock(nn.Module):
     """
     def __init__(self, d_model, num_heads=8, dropout=0.0):
         super(EncoderBlock, self).__init__()
+        # self-attention.
         self.attention = nn.MultiheadAttention(embed_dim=d_model,
-                                               num_heads=num_heads,
-                                               dropout=dropout)
+                                               num_heads=num_heads)
         self.norm1 = nn.LayerNorm(normalized_shape=d_model)
         self.dropout1 = nn.Dropout(p=dropout)
+        # feed forward.
         self.feedforward = nn.Sequential(
             nn.Linear(d_model, 64),
             nn.ReLU(),
