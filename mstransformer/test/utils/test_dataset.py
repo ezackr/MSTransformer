@@ -6,6 +6,7 @@ def test_musdb():
     # Subsequent tests should run in < 45 secs.
     musdb = MUSDBDataset(download=True, samples_per_track=1, duration=1.0)
     for x, y in musdb:
+        print(x.shape)
         assert x.shape == y.shape
         # default sampling frequency for MUSDB is 44.1 kHz.
         assert x.shape[-1] == 44100

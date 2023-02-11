@@ -16,7 +16,7 @@ class STFT(nn.Module):
         self.window = nn.Parameter(torch.hann_window(n_fft), requires_grad=False)
 
     def forward(self, x):
-        # x.shape == (num_samples, num_channels, seq_len)
+        # x.shape == (num_samples, seq_len)
         x_stft = x.view(-1, x.shape[-1])
         x_stft = torch.stft(
             x_stft,
@@ -31,7 +31,7 @@ class STFT(nn.Module):
         )
         x_stft = torch.view_as_real(x_stft)
         x_stft = x_stft.view(x.shape[:-1] + x_stft.shape[-3:])
-        # x.shape == (num_samples, num_channels, num_bins, num_frames, 2)
+        # x.shape == (num_samples, num_bins, num_frames, 2)
         return x_stft
 
 
