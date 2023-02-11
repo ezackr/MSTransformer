@@ -38,9 +38,9 @@ def train(
     samples_per_track: int = 16,
     batch_size: int = 32,
     sample_rate: float = 44100.0,
-    hidden_dim: int = 512,
-    num_epochs: int = 5,
 ):
+    num_epochs = 5
+
     print(f'Loading Dataset:')
     train_loader, val_loader = get_dataloader(
         target, root, subsets, is_wav, download,

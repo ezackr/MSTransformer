@@ -6,9 +6,8 @@ from torch import nn
 
 class PositionalEncoding(nn.Module):
     """
-    Applies Positional Encoding to each position in a sequence, where
-    `dim_model = num_channels = 2`. Uses encoding proposed in
-    "Attention Is All You Need".
+    Applies Positional Encoding to each position in a sequence.
+    Uses encoding proposed in "Attention Is All You Need".
     """
 
     def __init__(self, seq_len=512, d_model=512):
@@ -28,11 +27,4 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        # uses default shape from MUSDBDataset.
-        # x.shape == (batch_size, num_channels, seq_length)
-        x = x.permute(0, 2, 1)
-        # x.shape == (batch_size, seq_length, num_channels)
-        x_enc = x + self.pe[:, :x.size(1), :]
-        x_enc = x_enc.permute(0, 2, 1)
-        # x.shape == (batch_size, num_channels, seq_length)
-        return x_enc
+        return x + self.pe[:, :, :]
