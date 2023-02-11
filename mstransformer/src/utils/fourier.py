@@ -64,6 +64,18 @@ class ISTFT(nn.Module):
         return x_out
 
 
+class ComplexNorm(nn.Module):
+    def __init__(self, mono: bool = False):
+        super(ComplexNorm, self).__init__()
+        self.mono = mono
+
+    def forward(self, x):
+        spec = torch.abs(torch.view_as_complex(x))
+        if self.mono:
+            spec = torch.mean(spec, dim=1, keepdim=True)
+        return spec
+
+
 def get_fourier_transforms(n_fft, hop_length, center=False):
     encoder = STFT(n_fft=n_fft, hop_length=hop_length, center=center)
     decoder = ISTFT(n_fft=n_fft, hop_length=hop_length, center=center)
