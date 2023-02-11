@@ -76,7 +76,11 @@ class ComplexNorm(nn.Module):
         return spec
 
 
-def get_fourier_transforms(n_fft, hop_length, center=False):
+def get_fourier_transforms(
+        n_fft: int = 4096,
+        hop_length: int = 1024,
+        center=False
+):
     encoder = STFT(n_fft=n_fft, hop_length=hop_length, center=center)
     decoder = ISTFT(n_fft=n_fft, hop_length=hop_length, center=center)
     return encoder, decoder
