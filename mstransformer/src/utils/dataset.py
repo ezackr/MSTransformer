@@ -69,7 +69,8 @@ class MUSDBDataset(Dataset):
                 target_idx = k
             track.chunk_duration = self.duration
             track.chunk_start = np.random.uniform(low=0, high=track.duration - self.duration)
-            audio = torch.as_tensor(track.sources[source].audio.T, dtype=torch.float32)
+            audio = np.mean(track.sources[source].audio.T, axis=0)
+            audio = torch.as_tensor(audio, dtype=torch.float32)
             sources.append(audio)
 
         # stems tensor of shape (num_sources, num_channels, 44100).
