@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 
 from mstransformer.src.transformer.position import PositionalEncoding
@@ -16,7 +15,7 @@ class DecoderBlock(nn.Module):
         self.enc_dec_attn = nn.MultiheadAttention(embed_dim=d_model,
                                                   num_heads=num_heads)
         self.norm2 = nn.LayerNorm(normalized_shape=d_model)
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout2 = nn.Dropout(p=dropout)
         # feed-forward
         self.feedforward = nn.Sequential(
             nn.Linear(d_model, 64),
@@ -24,10 +23,10 @@ class DecoderBlock(nn.Module):
             nn.Linear(64, d_model)
         )
         self.norm3 = nn.LayerNorm(normalized_shape=d_model)
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout3 = nn.Dropout(p=dropout)
 
     def forward(self, tgt, memory, mask):
-        tgt = self.dropout1(self.norm1(tgt + self.self_attn(tgt, tgt, tgt, mask=mask)[0]))
+        tgt = self.dropout1(self.norm1(tgt + self.self_attn(tgt, tgt, tgt, attn_mask=mask)[0]))
         out = self.dropout2(self.norm2(tgt + self.enc_dec_attn(tgt, memory, memory)[0]))
         out = self.dropout3(self.norm3(out + self.feedforward(out)))
         return out
