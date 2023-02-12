@@ -1,3 +1,4 @@
+import museval
 import time
 from tqdm.auto import tqdm
 
@@ -5,6 +6,7 @@ import torch
 from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
+from torchmetrics.audio import SignalDistortionRatio
 
 from mstransformer.src.transformer import MSTransformer
 from mstransformer.src.utils import load_dataset
@@ -77,5 +79,36 @@ def train():
         torch.save(model.state_dict(), path)
 
 
+def evaluate():
+    # load model artifact
+    model = MSTransformer(dropout=0.1)
+    artifact_name = 'mstransformer_10epoch.pt'
+    path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
+    model.load_state_dict(torch.load(path))
+    model.eval()
+
+    # get validation dataset
+    batch_size = 16
+    _, val_loader = get_dataloader(
+        target='vocals',
+        duration=1.0,
+        samples_per_track=8,
+        batch_size=batch_size
+    )
+
+    sdr = SignalDistortionRatio()
+    total_score = 0
+    with torch.no_grad():
+        for x, y in tqdm(val_loader):
+            x_hat, t_hat = model(x, y)
+            for i in tqdm(range(len(x_hat))):
+                estimate = x_hat[i]
+                target = t_hat[i]
+                total_score += sdr(estimate, target).item()
+        total_score = total_score / len(val_loader) / batch_size
+    print(total_score)
+
+
 if __name__ == '__main__':
     train()
+    # evaluate()
