@@ -8,7 +8,7 @@ from mstransformer.src.transformer.preprocess import PreprocessLayer, Postproces
 
 def _get_target_mask(batch_size):
     mask = torch.triu(torch.ones(batch_size, batch_size), diagonal=0)
-    mask[mask.bool()] = -float('inf')
+    mask[mask.bool()] = -1e9
     return mask
 
 

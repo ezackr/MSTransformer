@@ -87,9 +87,10 @@ class MUSDBDataset(Dataset):
         return x, y
 
     def _get_val_item(self, track):
+        track.chunk_duration = self.duration
         x = torch.as_tensor(track.audio.T, dtype=torch.float32)
         y = torch.as_tensor(track.targets[self.target].audio.T, dtype=torch.float32)
-        return x, y
+        return torch.mean(x, dim=0), torch.mean(y, dim=0)
 
     def __getitem__(self, idx):
         track = self.mus.tracks[idx // self.samples_per_track]
@@ -108,7 +109,7 @@ def load_dataset(
         subsets: str = 'train',
         is_wav: bool = False,
         download: bool = False,
-        duration: Optional[float] = 6.0,
+        duration: Optional[float] = 5.0,
         samples_per_track: int = 64
 ) -> Tuple[MUSDBDataset, MUSDBDataset]:
     """
