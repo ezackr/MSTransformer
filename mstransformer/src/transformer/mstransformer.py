@@ -3,7 +3,7 @@ from torch import nn
 
 from mstransformer.src.transformer.decoder import Decoder
 from mstransformer.src.transformer.encoder import Encoder
-from mstransformer.src.transformer.preprocess import PreprocessLayer
+from mstransformer.src.transformer.preprocess import PreprocessLayer, PostprocessLayer
 
 
 def _get_target_mask(batch_size):
@@ -20,38 +20,29 @@ class MSTransformer(nn.Module):
             dropout=0.0,
     ):
         super(MSTransformer, self).__init__()
-
-        # preprocess layer converts raw audio to STFT spectrogram.
-        self.preprocess = PreprocessLayer()
-        input_dim = self.preprocess.input_dim
-
-        # set data to be of size `d_model`.
-        self.in_linear = nn.Linear(input_dim, d_model)
-        # encode spectrogram.
+        self.preprocess = PreprocessLayer(d_model=d_model)
         self.encoder = Encoder(
             d_model=d_model,
             max_len=max_len,
             dropout=dropout
         )
-
-        # decode spectrogram.
         self.decoder = Decoder(
             d_model=d_model,
             max_len=max_len,
             dropout=dropout
         )
-        # reset data to input size.
-        self.out_linear = nn.Linear(d_model, input_dim)
+        self.postprocess = PostprocessLayer(d_model=d_model)
 
     def forward(self, x, tgt):
         # preprocess data.
         x_spec = self.preprocess(x)
-        x_spec = self.in_linear(x_spec)
+        t_spec = self.preprocess(tgt)
         # encode.
         x_enc = self.encoder(x_spec)
         # decode.
-        tgt_mask = _get_target_mask(batch_size=len(x))
-        y_hat = self.decoder(tgt, x_enc, mask=tgt_mask)
+        t_mask = _get_target_mask(batch_size=len(x))
+        x_hat = self.decoder(t_spec, x_enc, mask=t_mask)
         # reformat data.
-        y_hat = self.out_linear(y_hat)
-        return y_hat
+        x_hat = self.postprocess(x_hat, length=tgt.shape[-1])
+        t_hat = self.postprocess(t_spec, length=tgt.shape[-1])
+        return x_hat, t_hat
