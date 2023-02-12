@@ -1,8 +1,15 @@
 import torch
 from torch import nn
 
+from mstransformer.src.transformer.decoder import Decoder
 from mstransformer.src.transformer.encoder import Encoder
 from mstransformer.src.transformer.preprocess import PreprocessLayer
+
+
+def _get_target_mask(batch_size):
+    mask = torch.triu(torch.ones(batch_size, batch_size), diagonal=0)
+    mask[mask.bool()] = -float('inf')
+    return mask
 
 
 class MSTransformer(nn.Module):
@@ -19,7 +26,7 @@ class MSTransformer(nn.Module):
         input_dim = self.preprocess.input_dim
 
         # set data to be of size `d_model`.
-        self.linear = nn.Linear(input_dim, d_model)
+        self.in_linear = nn.Linear(input_dim, d_model)
         # encode spectrogram.
         self.encoder = Encoder(
             d_model=d_model,
@@ -28,11 +35,23 @@ class MSTransformer(nn.Module):
         )
 
         # decode spectrogram.
-        self.decoder = lambda x: x
+        self.decoder = Decoder(
+            d_model=d_model,
+            max_len=max_len,
+            dropout=dropout
+        )
+        # reset data to input size.
+        self.out_linear = nn.Linear(d_model, input_dim)
 
-    def forward(self, x, target):
+    def forward(self, x, tgt):
+        # preprocess data.
         x_spec = self.preprocess(x)
-        x_spec = self.linear(x_spec)
+        x_spec = self.in_linear(x_spec)
+        # encode.
         x_enc = self.encoder(x_spec)
-        y_hat = self.decoder(x_enc)
+        # decode.
+        tgt_mask = _get_target_mask(batch_size=len(x))
+        y_hat = self.decoder(tgt, x_enc, mask=tgt_mask)
+        # reformat data.
+        y_hat = self.out_linear(y_hat)
         return y_hat

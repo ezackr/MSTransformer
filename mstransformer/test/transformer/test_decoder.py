@@ -11,7 +11,7 @@ def test_decoder_block():
     x = torch.rand(size=(batch_size, seq_len, d_model))
     tgt = torch.rand(size=(batch_size, seq_len, d_model))
 
-    mask = torch.triu(torch.ones(batch_size, batch_size), diagonal=1)
+    mask = torch.triu(torch.ones(batch_size, batch_size), diagonal=0)
     mask[mask.bool()] = -float('inf')
 
     decoder = DecoderBlock(
