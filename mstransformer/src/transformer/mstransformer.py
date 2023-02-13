@@ -15,6 +15,7 @@ def _get_target_mask(batch_size):
 class MSTransformer(nn.Module):
     def __init__(
             self,
+            num_layers=6,
             d_model=512,
             max_len=512,
             dropout=0.0,
@@ -22,11 +23,13 @@ class MSTransformer(nn.Module):
         super(MSTransformer, self).__init__()
         self.preprocess = PreprocessLayer(d_model=d_model)
         self.encoder = Encoder(
+            num_layers=num_layers,
             d_model=d_model,
             max_len=max_len,
             dropout=dropout
         )
         self.decoder = Decoder(
+            num_layers=num_layers,
             d_model=d_model,
             max_len=max_len,
             dropout=dropout
