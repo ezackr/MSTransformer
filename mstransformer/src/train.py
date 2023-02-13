@@ -34,9 +34,9 @@ def train():
 
     train_loader, val_loader = get_dataloader(
         target='vocals',
-        duration=1.0,
-        samples_per_track=8,
-        batch_size=16
+        duration=2.0,
+        samples_per_track=32,
+        batch_size=32
     )
 
     model = MSTransformer(dropout=0.1)
@@ -72,27 +72,28 @@ def train():
               f'train_loss={train_losses[-1]} '
               f'val_loss={val_losses[-1]} '
               f'time={(time.time() - start_time) / 60}m\n')
+    print(f'(FINAL) train loss={train_losses}')
+    print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstransformer_10epoch.pt'
+        artifact_name = 'mstransformer_10epoch_64samples.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
 
 def evaluate():
-    # load model artifact
+    # load model artifact.
     model = MSTransformer(dropout=0.1)
-    artifact_name = 'mstransformer_10epoch.pt'
+    artifact_name = 'mstransformer_10epoch_64samples.pt'
     path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
     model.load_state_dict(torch.load(path))
     model.eval()
 
-    # get validation dataset
+    # get validation dataset.
     batch_size = 16
     _, val_loader = get_dataloader(
         target='vocals',
         duration=1.0,
-        samples_per_track=8,
         batch_size=batch_size
     )
 
@@ -110,5 +111,11 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    train()
-    # evaluate()
+    mode = 'evaluate'
+
+    if mode == train:
+        print(f'Training...')
+        # train()
+    else:
+        print(f'Evaluating...')
+        evaluate()
