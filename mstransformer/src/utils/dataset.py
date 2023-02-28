@@ -34,6 +34,8 @@ class MUSDBDataset(Dataset):
             Default: None (loads full audio track).
         - samples_per_track (int): the number of mixture created per track.
             Default: 64
+        - mono (bool): whether to use a single channel for input data.
+            Default: False
     """
     def __init__(
             self,
@@ -44,7 +46,8 @@ class MUSDBDataset(Dataset):
             download: bool = False,
             split: str = 'train',
             duration: Optional[float] = 6.0,
-            samples_per_track: int = 64
+            samples_per_track: int = 64,
+            mono: bool = False,
     ) -> None:
         self.mus = musdb.DB(
             root=root,
@@ -58,6 +61,7 @@ class MUSDBDataset(Dataset):
         self.split = split
         self.duration = duration
         self.samples_per_track = samples_per_track
+        self.mono = mono
 
     def _get_train_item(self, track):
         sources = []
@@ -69,7 +73,10 @@ class MUSDBDataset(Dataset):
                 target_idx = k
             track.chunk_duration = self.duration
             track.chunk_start = np.random.uniform(low=0, high=track.duration - self.duration)
-            audio = np.mean(track.sources[source].audio.T, axis=0)
+            audio = track.sources[source].audio.T
+            # average channels if using one channel.
+            if self.mono:
+                audio = np.mean(audio, axis=0)
             audio = torch.as_tensor(audio, dtype=torch.float32)
             sources.append(audio)
 
@@ -90,7 +97,10 @@ class MUSDBDataset(Dataset):
         track.chunk_duration = self.duration
         x = torch.as_tensor(track.audio.T, dtype=torch.float32)
         y = torch.as_tensor(track.targets[self.target].audio.T, dtype=torch.float32)
-        return torch.mean(x, dim=0), torch.mean(y, dim=0)
+        if self.mono:
+            x = torch.mean(x, dim=0)
+            y = torch.mean(y, dim=0)
+        return x, y
 
     def __getitem__(self, idx):
         track = self.mus.tracks[idx // self.samples_per_track]
@@ -110,7 +120,8 @@ def load_dataset(
         is_wav: bool = False,
         download: bool = False,
         duration: Optional[float] = 5.0,
-        samples_per_track: int = 64
+        samples_per_track: int = 64,
+        mono: bool = False,
 ) -> Tuple[MUSDBDataset, MUSDBDataset]:
     """
     Creates a test and validation MUSDBDataset using the provided
@@ -124,7 +135,8 @@ def load_dataset(
         download=download,
         split='train',
         duration=duration,
-        samples_per_track=samples_per_track
+        samples_per_track=samples_per_track,
+        mono=mono
     )
     val_dataset = MUSDBDataset(
         target=target,
@@ -134,6 +146,7 @@ def load_dataset(
         download=download,
         split='valid',
         duration=duration,
-        samples_per_track=samples_per_track
+        samples_per_track=samples_per_track,
+        mono=mono
     )
     return train_dataset, val_dataset
