@@ -3,6 +3,9 @@ from torch import nn
 
 
 class ConvLayer(nn.Module):
+    """
+    Double convolutional layer using BatchNorm and ReLU activation.
+    """
     def __init__(self, in_channels, out_channels):
         super(ConvLayer, self).__init__()
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=(3,), padding=1, bias=False)
@@ -18,6 +21,11 @@ class ConvLayer(nn.Module):
 
 
 class DownSample(nn.Module):
+    """
+    Uses double convolution and max pooling to down-sample a waveform.
+    Returns both `x_conv` and `x_pool`. `x_conv` is used as context for the
+    decoder. `x_pool` is used as input for the next layer.
+    """
     def __init__(self, in_channels, out_channels):
         super(DownSample, self).__init__()
         self.conv = ConvLayer(in_channels, out_channels)
@@ -30,6 +38,12 @@ class DownSample(nn.Module):
 
 
 class UpSample(nn.Module):
+    """
+    Uses both transpose convolution and double convolution to up-sample a
+    waveform. Has two inputs. `x` has shape (batch_size, in_channels, L) and
+    `context` of shape (batch_size, out_channels, 2*L). Output has shape
+    (batch_size, out_channels, 2*L).
+    """
     def __init__(self, in_channels, out_channels):
         super(UpSample, self).__init__()
         self.conv_transpose = nn.ConvTranspose1d(
