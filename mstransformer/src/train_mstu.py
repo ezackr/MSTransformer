@@ -33,14 +33,14 @@ def train():
     train_loader, val_loader = get_dataloader(
         target='vocals',
         duration=1.0,
-        samples_per_track=128,
+        samples_per_track=32,
         batch_size=32
     )
 
     model = MSTU(dropout=0.1)
     optimizer = AdamW(model.parameters())
 
-    num_epochs = 20
+    num_epochs = 10
     train_losses = []
     val_losses = []
     for i in tqdm(range(num_epochs)):
