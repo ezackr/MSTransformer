@@ -15,7 +15,7 @@ def get_dataloader(
         target: str = 'vocals',
         duration: float = 1.0,
         samples_per_track: int = 8,
-        batch_size: int = 32
+        batch_size: int = 64
 ):
     train_dataset, val_dataset = load_dataset(
         target=target,
@@ -35,13 +35,13 @@ def train():
         target='vocals',
         duration=2.0,
         samples_per_track=8,
-        batch_size=32
+        batch_size=16
     )
 
     model = MSTU(dropout=0.1)
     optimizer = AdamW(model.parameters())
 
-    num_epochs = 1
+    num_epochs = 4
     train_losses = []
     val_losses = []
     for i in tqdm(range(num_epochs)):
@@ -78,6 +78,31 @@ def train():
         artifact_name = 'mstu_8sample_4epoch.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
+
+
+def evaluate():
+    # load model artifact.
+    model = MSTU(dropout=0.1)
+    artifact_name = 'mstu_8sample_4epoch.pt'
+    path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
+    model.load_state_dict(torch.load(path))
+    model.eval()
+
+    # get validation dataset.
+    _, val_loader = get_dataloader(
+        target='vocals',
+        duration=1.0,
+        batch_size=16
+    )
+
+    sdr = SignalDistortionRatio()
+    total_score = 0
+    with torch.no_grad():
+        for x, y in tqdm(val_loader):
+            y_hat = model(x)
+            total_score += sdr(y, y_hat).item()
+        total_score = total_score / len(val_loader)
+    print(total_score)
 
 
 if __name__ == '__main__':
