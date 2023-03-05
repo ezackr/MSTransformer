@@ -36,6 +36,6 @@ def test_mstu():
     num_channels = 2
     length = 44100
     x_in = torch.rand(size=(batch_size, num_channels, length))
-    model = MSTU()
+    model = MSTU(num_bottleneck_layers=2)
     x_out = model(x_in)
     assert x_out.shape == x_in.shape

@@ -42,6 +42,7 @@ def train():
         hidden_dim=4,
         num_sample_layers=8,
         num_trans_layers=6,
+        num_bottleneck_layers=4,
         num_heads=8,
         max_len=1024,
         dropout=0.1
@@ -87,7 +88,7 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstu_4sample_4epoch_exp1.pt'
+        artifact_name = 'mstu_4sample_4epoch_exp2.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 

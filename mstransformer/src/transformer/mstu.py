@@ -30,6 +30,7 @@ class MSTU(nn.Module):
             hidden_dim=4,
             num_sample_layers=8,
             num_trans_layers=6,
+            num_bottleneck_layers=1,
             num_heads=8,
             max_len=1024,
             dropout=0.0,
@@ -52,11 +53,15 @@ class MSTU(nn.Module):
             max_len=max_len,
             dropout=dropout
         )
-        self.bottleneck = ConvLayer(in_channels, in_channels * 2)
-        in_channels *= 2
+        # bottleneck.
+        bottlenecks = [ConvLayer(in_channels, in_channels * 2)]
+        for _ in range(num_bottleneck_layers - 1):
+            bottlenecks.append(ConvLayer(in_channels * 2, in_channels * 2))
+        self.bottleneck = nn.ModuleList(bottlenecks)
 
         # up-sampling.
         up_samples = []
+        in_channels *= 2
         for _ in range(num_sample_layers):
             up_samples.append(UpSample(in_channels, in_channels // 2))
             in_channels //= 2
@@ -79,7 +84,9 @@ class MSTU(nn.Module):
         x_in = x_in.permute(0, 2, 1)
         x_out = self.encoder(x_in)
         x_out = x_out.permute(0, 2, 1)
-        x_out = self.bottleneck(x_out)
+        # bottleneck.
+        for block in self.bottleneck:
+            x_out = block(x_out)
 
         # up-sample.
         for i in range(len(context_list)):
