@@ -1,6 +1,3 @@
-from tqdm.auto import tqdm
-
-import torch
 from torch import nn
 from torch.nn import functional as F
 
@@ -40,11 +37,12 @@ class MSTU(nn.Module):
         super(MSTU, self).__init__()
 
         # down-sampling.
-        self.down_sample_blocks = [DownSample(num_channels, hidden_dim)]
+        down_samples = [DownSample(num_channels, hidden_dim)]
         in_channels = hidden_dim
         for _ in range(num_sample_layers - 1):
-            self.down_sample_blocks.append(DownSample(in_channels, in_channels * 2))
+            down_samples.append(DownSample(in_channels, in_channels * 2))
             in_channels *= 2
+        self.down_sample_blocks = nn.ModuleList(down_samples)
 
         # transformer encoder.
         self.encoder = Encoder(
@@ -58,10 +56,11 @@ class MSTU(nn.Module):
         in_channels *= 2
 
         # up-sampling.
-        self.up_sample_blocks = []
+        up_samples = []
         for _ in range(num_sample_layers):
-            self.up_sample_blocks.append(UpSample(in_channels, in_channels // 2))
+            up_samples.append(UpSample(in_channels, in_channels // 2))
             in_channels //= 2
+        self.up_sample_blocks = nn.ModuleList(up_samples)
 
         self.out_conv = ConvLayer(in_channels, num_channels)
 

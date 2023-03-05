@@ -56,10 +56,10 @@ class Encoder(nn.Module):
     ):
         super(Encoder, self).__init__()
         self.positional_encoding = PositionalEncoding(max_len, d_model)
-        self.blocks = [
+        self.blocks = nn.ModuleList([
             EncoderBlock(d_model, num_heads, dropout)
             for _ in range(num_layers)
-        ]
+        ])
 
     def forward(self, x):
         x_enc = self.positional_encoding(x)
