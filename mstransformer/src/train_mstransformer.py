@@ -101,14 +101,14 @@ def evaluate():
     total_score = 0
     with torch.no_grad():
         for x, y in tqdm(val_loader):
-            x_hat, t_hat = model(x, y)
-            total_score += sdr(x_hat, t_hat)
+            y_hat = model(x, y)
+            total_score += sdr(y, y_hat)
         total_score = total_score / len(val_loader) / batch_size
     print(total_score)
 
 
 if __name__ == '__main__':
-    mode = 'train'
+    mode = 'evaluation'
 
     if mode == 'train':
         print(f'Training...')
