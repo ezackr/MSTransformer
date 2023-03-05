@@ -33,14 +33,22 @@ def train():
     train_loader, val_loader = get_dataloader(
         target='vocals',
         duration=1.0,
-        samples_per_track=32,
+        samples_per_track=4,
         batch_size=32
     )
 
-    model = MSTU(dropout=0.1)
+    model = MSTU(
+        num_channels=2,
+        hidden_dim=4,
+        num_sample_layers=8,
+        num_trans_layers=6,
+        num_heads=8,
+        max_len=1024,
+        dropout=0.1
+    )
     optimizer = AdamW(model.parameters())
 
-    num_epochs = 10
+    num_epochs = 4
     train_losses = []
     val_losses = []
     for i in tqdm(range(num_epochs)):
@@ -79,7 +87,7 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstu_128sample_20epoch.pt'
+        artifact_name = 'mstu_4sample_4epoch_exp1.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
@@ -111,7 +119,7 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    mode = 'evaluate'
+    mode = 'train'
 
     if mode == 'train':
         print(f'Training...')

@@ -31,7 +31,7 @@ class MSTU(nn.Module):
             num_sample_layers=8,
             num_trans_layers=6,
             num_heads=8,
-            max_len=2048,
+            max_len=1024,
             dropout=0.0,
     ):
         super(MSTU, self).__init__()
