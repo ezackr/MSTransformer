@@ -47,5 +47,4 @@ class MSTransformer(nn.Module):
         x_hat = self.decoder(t_spec, x_enc, mask=t_mask)
         # reformat data.
         x_hat = self.postprocess(x_hat, length=tgt.shape[-1])
-        t_hat = self.postprocess(t_spec, length=tgt.shape[-1])
-        return x_hat, t_hat
+        return x_hat

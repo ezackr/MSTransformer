@@ -10,5 +10,5 @@ def test_mstransformer():
     target = torch.rand(size=(batch_size, total_length))
 
     transformer = MSTransformer(d_model=512, max_len=512, dropout=0.0)
-    x_hat, t_hat = transformer(x, target)
-    assert x_hat.shape == t_hat.shape == (32, 44100)
+    x_hat = transformer(x, target)
+    assert x_hat.shape == (32, 44100)
