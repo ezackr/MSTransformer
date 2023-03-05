@@ -1,4 +1,3 @@
-import museval
 import time
 from tqdm.auto import tqdm
 
@@ -6,17 +5,16 @@ import torch
 from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-from torchmetrics.audio import SignalDistortionRatio
 
-from mstransformer.src.transformer import MSTransformer
-from mstransformer.src.utils import load_dataset
+from mstransformer.src.transformer import MSTU
+from mstransformer.src.utils import sdr, get_number_of_parameters, load_dataset
 
 
 def get_dataloader(
         target: str = 'vocals',
         duration: float = 1.0,
         samples_per_track: int = 8,
-        batch_size: int = 32
+        batch_size: int = 64
 ):
     train_dataset, val_dataset = load_dataset(
         target=target,
@@ -34,12 +32,12 @@ def train():
 
     train_loader, val_loader = get_dataloader(
         target='vocals',
-        duration=2.0,
+        duration=1.0,
         samples_per_track=32,
         batch_size=32
     )
 
-    model = MSTransformer(dropout=0.1)
+    model = MSTU(dropout=0.1)
     optimizer = AdamW(model.parameters())
 
     num_epochs = 10
@@ -50,10 +48,14 @@ def train():
 
         model.train()
         total_loss = 0
+        # TRAINING LOOP:
         for x, y in tqdm(train_loader):
+            # zero gradients.
             optimizer.zero_grad()
-            x_hat, t_hat = model(x, y)
-            loss = mse_loss(x_hat, t_hat)
+            # get source estimate.
+            y_hat = model(x)
+            # calculate loss and update parameters.
+            loss = mse_loss(y_hat, y)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
@@ -61,14 +63,15 @@ def train():
 
         model.eval()
         total_loss = 0
+        # VALIDATION LOOP:
         with torch.no_grad():
             for x, y in tqdm(val_loader):
-                x_hat, t_hat = model(x, y)
-                loss = mse_loss(x_hat, t_hat)
+                y_hat = model(x)
+                loss = mse_loss(y_hat, y)
                 total_loss += loss.item()
         val_losses.append(total_loss / len(val_loader))
 
-        print(f'\nepoch {i} summary: '
+        print(f'\nepoch {i + 1} summary: '
               f'train_loss={train_losses[-1]} '
               f'val_loss={val_losses[-1]} '
               f'time={(time.time() - start_time) / 60}m\n')
@@ -76,46 +79,43 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstransformer_10epoch_64samples.pt'
+        artifact_name = 'mstu_128sample_20epoch.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
 
 def evaluate():
     # load model artifact.
-    model = MSTransformer(dropout=0.1)
-    artifact_name = 'mstransformer_10epoch_64samples.pt'
+    model = MSTU(dropout=0.1)
+    artifact_name = 'mstu_128sample_20epoch.pt'
     path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
     model.load_state_dict(torch.load(path))
     model.eval()
-
     # get validation dataset.
-    batch_size = 16
     _, val_loader = get_dataloader(
         target='vocals',
         duration=1.0,
-        batch_size=batch_size
+        batch_size=32
     )
 
-    sdr = SignalDistortionRatio()
+    # evaluate model.
     total_score = 0
     with torch.no_grad():
         for x, y in tqdm(val_loader):
-            x_hat, t_hat = model(x, y)
-            for i in tqdm(range(len(x_hat))):
-                estimate = x_hat[i]
-                target = t_hat[i]
-                total_score += sdr(estimate, target).item()
-        total_score = total_score / len(val_loader) / batch_size
-    print(total_score)
+            y_hat = model(x)
+            total_score += sdr(target=y, estimate=y_hat).item()
+        total_score = total_score / len(val_loader)
+    print(f'MSTU model = \"{path}\", \n'
+          f'number of parameters = {get_number_of_parameters(model)}\n'
+          f'evaluation SDR = {total_score}')
 
 
 if __name__ == '__main__':
     mode = 'evaluate'
 
-    if mode == train:
+    if mode == 'train':
         print(f'Training...')
-        # train()
+        train()
     else:
         print(f'Evaluating...')
         evaluate()

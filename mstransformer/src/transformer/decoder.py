@@ -43,10 +43,10 @@ class Decoder(nn.Module):
     ):
         super(Decoder, self).__init__()
         self.positional_encoding = PositionalEncoding(max_len, d_model)
-        self.blocks = [
+        self.blocks = nn.ModuleList([
             DecoderBlock(d_model, num_heads, dropout)
             for _ in range(num_layers)
-        ]
+        ])
 
     def forward(self, target, memory, mask):
         tgt = self.positional_encoding(target)
