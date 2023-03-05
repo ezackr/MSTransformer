@@ -21,7 +21,8 @@ def get_dataloader(
         target=target,
         download=True,
         duration=duration,
-        samples_per_track=samples_per_track
+        samples_per_track=samples_per_track,
+        mono=True
     )
     train_loader = DataLoader(train_dataset, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
@@ -33,7 +34,7 @@ def train():
 
     train_loader, val_loader = get_dataloader(
         target='vocals',
-        duration=2.0,
+        duration=1.0,
         samples_per_track=8,
         batch_size=32
     )
@@ -51,8 +52,8 @@ def train():
         total_loss = 0
         for x, y in tqdm(train_loader):
             optimizer.zero_grad()
-            x_hat, t_hat = model(x, y)
-            loss = mse_loss(x_hat, t_hat)
+            y_hat = model(x, y)
+            loss = mse_loss(y_hat, y)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
@@ -62,8 +63,8 @@ def train():
         total_loss = 0
         with torch.no_grad():
             for x, y in tqdm(val_loader):
-                x_hat, t_hat = model(x, y)
-                loss = mse_loss(x_hat, t_hat)
+                y_hat = model(x, y)
+                loss = mse_loss(y_hat, y)
                 total_loss += loss.item()
         val_losses.append(total_loss / len(val_loader))
 
