@@ -8,7 +8,7 @@ from torch.optim import AdamW
 from torchmetrics.audio import SignalDistortionRatio
 
 from mstransformer.src.transformer import MSTU
-from mstransformer.src.utils import load_dataset
+from mstransformer.src.utils import get_number_of_parameters, load_dataset
 
 
 def get_dataloader(
@@ -35,7 +35,7 @@ def train():
         target='vocals',
         duration=2.0,
         samples_per_track=8,
-        batch_size=16
+        batch_size=32
     )
 
     model = MSTU(dropout=0.1)
@@ -92,7 +92,7 @@ def evaluate():
     _, val_loader = get_dataloader(
         target='vocals',
         duration=1.0,
-        batch_size=16
+        batch_size=32
     )
 
     sdr = SignalDistortionRatio()
@@ -102,7 +102,9 @@ def evaluate():
             y_hat = model(x)
             total_score += sdr(y, y_hat).item()
         total_score = total_score / len(val_loader)
-    print(total_score)
+    print(f'MSTU model=\"{path}\", \n'
+          f'number of parameters={get_number_of_parameters(model)}'
+          f'evaluation SDR={total_score}')
 
 
 if __name__ == '__main__':
