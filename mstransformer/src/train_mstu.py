@@ -48,9 +48,13 @@ def train():
 
         model.train()
         total_loss = 0
+        # TRAINING LOOP:
         for x, y in tqdm(train_loader):
+            # zero gradients.
             optimizer.zero_grad()
+            # get source estimate.
             y_hat = model(x)
+            # calculate loss and update parameters.
             loss = mse_loss(y_hat, y)
             loss.backward()
             optimizer.step()
@@ -59,6 +63,7 @@ def train():
 
         model.eval()
         total_loss = 0
+        # VALIDATION LOOP:
         with torch.no_grad():
             for x, y in tqdm(val_loader):
                 y_hat = model(x)
@@ -66,7 +71,7 @@ def train():
                 total_loss += loss.item()
         val_losses.append(total_loss / len(val_loader))
 
-        print(f'\nepoch {i} summary: '
+        print(f'\nepoch {i + 1} summary: '
               f'train_loss={train_losses[-1]} '
               f'val_loss={val_losses[-1]} '
               f'time={(time.time() - start_time) / 60}m\n')
@@ -106,7 +111,7 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    mode = 'train'
+    mode = 'evaluate'
 
     if mode == 'train':
         print(f'Training...')

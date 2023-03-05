@@ -34,14 +34,14 @@ def train():
     train_loader, val_loader = get_dataloader(
         target='vocals',
         duration=2.0,
-        samples_per_track=32,
+        samples_per_track=8,
         batch_size=32
     )
 
     model = MSTransformer(dropout=0.1)
     optimizer = AdamW(model.parameters())
 
-    num_epochs = 10
+    num_epochs = 4
     train_losses = []
     val_losses = []
     for i in tqdm(range(num_epochs)):
@@ -101,20 +101,17 @@ def evaluate():
     with torch.no_grad():
         for x, y in tqdm(val_loader):
             x_hat, t_hat = model(x, y)
-            for i in tqdm(range(len(x_hat))):
-                estimate = x_hat[i]
-                target = t_hat[i]
-                total_score += sdr(estimate, target).item()
+            total_score += sdr(x_hat, t_hat)
         total_score = total_score / len(val_loader) / batch_size
     print(total_score)
 
 
 if __name__ == '__main__':
-    mode = 'evaluate'
+    mode = 'train'
 
-    if mode == train:
+    if mode == 'train':
         print(f'Training...')
-        # train()
+        train()
     else:
         print(f'Evaluating...')
         evaluate()
