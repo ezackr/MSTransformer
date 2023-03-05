@@ -5,10 +5,9 @@ import torch
 from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-from torchmetrics.audio import SignalDistortionRatio
 
 from mstransformer.src.transformer import MSTU
-from mstransformer.src.utils import get_number_of_parameters, load_dataset
+from mstransformer.src.utils import sdr, get_number_of_parameters, load_dataset
 
 
 def get_dataloader(
@@ -33,15 +32,15 @@ def train():
 
     train_loader, val_loader = get_dataloader(
         target='vocals',
-        duration=2.0,
-        samples_per_track=8,
+        duration=1.0,
+        samples_per_track=128,
         batch_size=32
     )
 
     model = MSTU(dropout=0.1)
     optimizer = AdamW(model.parameters())
 
-    num_epochs = 4
+    num_epochs = 20
     train_losses = []
     val_losses = []
     for i in tqdm(range(num_epochs)):
@@ -75,7 +74,7 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstu_8sample_4epoch.pt'
+        artifact_name = 'mstu_128sample_20epoch.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
@@ -83,11 +82,10 @@ def train():
 def evaluate():
     # load model artifact.
     model = MSTU(dropout=0.1)
-    artifact_name = 'mstu_8sample_4epoch.pt'
+    artifact_name = 'mstu_128sample_20epoch.pt'
     path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
     model.load_state_dict(torch.load(path))
     model.eval()
-
     # get validation dataset.
     _, val_loader = get_dataloader(
         target='vocals',
@@ -95,16 +93,16 @@ def evaluate():
         batch_size=32
     )
 
-    sdr = SignalDistortionRatio()
+    # evaluate model.
     total_score = 0
     with torch.no_grad():
         for x, y in tqdm(val_loader):
             y_hat = model(x)
-            total_score += sdr(y, y_hat).item()
+            total_score += sdr(target=y, estimate=y_hat).item()
         total_score = total_score / len(val_loader)
-    print(f'MSTU model=\"{path}\", \n'
-          f'number of parameters={get_number_of_parameters(model)}'
-          f'evaluation SDR={total_score}')
+    print(f'MSTU model = \"{path}\", \n'
+          f'number of parameters = {get_number_of_parameters(model)}\n'
+          f'evaluation SDR = {total_score}')
 
 
 if __name__ == '__main__':
@@ -115,4 +113,4 @@ if __name__ == '__main__':
         train()
     else:
         print(f'Evaluating...')
-        # evaluate()
+        evaluate()
