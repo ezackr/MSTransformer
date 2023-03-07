@@ -63,6 +63,14 @@ class MUSDBDataset(Dataset):
         self.samples_per_track = samples_per_track
         self.mono = mono
 
+    def get_statistics(self):
+        dataset = []
+        for track in self.mus.tracks:
+            audio = torch.as_tensor(track.audio.T, dtype=torch.float32)
+            dataset.append(audio)
+        dataset = torch.cat(dataset, dim=1)
+        return torch.mean(dataset, dim=1, keepdim=True), torch.std(dataset, dim=1, keepdim=True)
+
     def _get_train_item(self, track):
         sources = []
         target_idx = None

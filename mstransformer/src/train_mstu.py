@@ -22,15 +22,16 @@ def get_dataloader(
         duration=duration,
         samples_per_track=samples_per_track
     )
+    avg, std = train_dataset.get_statistics()
     train_loader = DataLoader(train_dataset, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
-    return train_loader, val_loader
+    return train_loader, val_loader, avg, std
 
 
 def train():
     save_artifact = True
 
-    train_loader, val_loader = get_dataloader(
+    train_loader, val_loader, avg, std = get_dataloader(
         target='vocals',
         duration=1.0,
         samples_per_track=4,
@@ -39,15 +40,15 @@ def train():
 
     model = MSTU(
         num_channels=2,
-        hidden_dim=4,
-        num_sample_layers=8,
-        num_trans_layers=6,
+        hidden_dim=64,
+        num_sample_layers=4,
+        num_trans_layers=12,
         num_bottleneck_layers=4,
         num_heads=8,
-        max_len=1024,
-        dropout=0.1
+        max_len=4096,
+        dropout=0.5
     )
-    optimizer = AdamW(model.parameters())
+    optimizer = AdamW(model.parameters(), lr=1e-4)
 
     num_epochs = 4
     train_losses = []
@@ -59,6 +60,8 @@ def train():
         total_loss = 0
         # TRAINING LOOP:
         for x, y in tqdm(train_loader):
+            x = (x - avg) / std
+            y = (y - avg) / std
             # zero gradients.
             optimizer.zero_grad()
             # get source estimate.
@@ -75,6 +78,8 @@ def train():
         # VALIDATION LOOP:
         with torch.no_grad():
             for x, y in tqdm(val_loader):
+                x = (x - avg) / std
+                y = (y - avg) / std
                 y_hat = model(x)
                 loss = mse_loss(y_hat, y)
                 total_loss += loss.item()
@@ -88,20 +93,29 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstu_4sample_4epoch_exp2.pt'
+        artifact_name = 'mstu_4sample_4epoch_exp7.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
 
 def evaluate():
     # load model artifact.
-    model = MSTU(dropout=0.1)
-    artifact_name = 'mstu_128sample_20epoch.pt'
+    model = MSTU(
+        num_channels=2,
+        hidden_dim=64,
+        num_sample_layers=4,
+        num_trans_layers=12,
+        num_bottleneck_layers=4,
+        num_heads=8,
+        max_len=4096,
+        dropout=0.5
+    )
+    artifact_name = 'mstu_actually_good_low_complexity.pt'
     path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
     model.load_state_dict(torch.load(path))
     model.eval()
     # get validation dataset.
-    _, val_loader = get_dataloader(
+    _, val_loader, avg, std = get_dataloader(
         target='vocals',
         duration=1.0,
         batch_size=32
@@ -111,6 +125,8 @@ def evaluate():
     total_score = 0
     with torch.no_grad():
         for x, y in tqdm(val_loader):
+            x = (x - avg) / std
+            y = (y - avg) / std
             y_hat = model(x)
             total_score += sdr(target=y, estimate=y_hat).item()
         total_score = total_score / len(val_loader)
@@ -120,7 +136,7 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    mode = 'train'
+    mode = 'evaluate'
 
     if mode == 'train':
         print(f'Training...')
