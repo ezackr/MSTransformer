@@ -1,5 +1,6 @@
 import time
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 import torch
 from torch.nn.functional import mse_loss
@@ -93,7 +94,7 @@ def train():
     print(f'(FINAL) val loss={val_losses}')
 
     if save_artifact:
-        artifact_name = 'mstu_4sample_4epoch_exp7.pt'
+        artifact_name = 'mstu_4sample_4epoch_exp8.pt'
         path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
         torch.save(model.state_dict(), path)
 
@@ -135,12 +136,64 @@ def evaluate():
           f'evaluation SDR = {total_score}')
 
 
+def analysis():
+    # load model artifact.
+    model = MSTU(
+        num_channels=2,
+        hidden_dim=64,
+        num_sample_layers=4,
+        num_trans_layers=12,
+        num_bottleneck_layers=4,
+        num_heads=8,
+        max_len=4096,
+        dropout=0.5
+    )
+    artifact_name = 'mstu_actually_good_low_complexity.pt'
+    path = F'/Users/elliottzackrone/PycharmProjects/artifacts/{artifact_name}'
+    model.load_state_dict(torch.load(path))
+    model.eval()
+    # get validation dataset.
+    train_dataset, val_dataset = load_dataset(
+        target='vocals',
+        download=True,
+        duration=1.0,
+        samples_per_track=4
+    )
+    avg, std = train_dataset.get_statistics()
+    # get standardized estimates.
+    x = ((val_dataset[0][0] - avg) / std).unsqueeze(0)
+    y = ((val_dataset[0][1] - avg) / std).unsqueeze(0)
+    y_hat = model(x).detach()
+    # convert to mono channel.
+    y = torch.mean(y, dim=1).squeeze()
+    y_hat = torch.mean(y_hat, dim=1).squeeze()
+    # plot results.
+    length = 44100
+    # plot true source.
+    plt.plot(range(length), y, color='blue')
+    plt.title('True Source')
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+    plt.ylim(top=2.5, bottom=-2.0)
+    plt.show()
+    # plot estimated source.
+    plt.plot(range(length), y_hat, color='orange')
+    plt.title('MSTU Estimate Source')
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+    plt.ylim(top=2.5, bottom=-2.0)
+    plt.show()
+
+
 if __name__ == '__main__':
-    mode = 'evaluate'
+    mode = 'analyze'
 
     if mode == 'train':
         print(f'Training...')
         train()
-    else:
+    elif mode == 'evaluate':
         print(f'Evaluating...')
         evaluate()
+    elif mode == 'analyze':
+        print(f'Analyzing...')
+        analysis()
