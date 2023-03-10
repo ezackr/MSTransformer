@@ -16,3 +16,10 @@ Utils directory includes all additional utilities for training, preprocessing, a
 - ``analysis.py``: SDR evaluation. Calculation for number of parameters in a model.
 - ``dataset.py``: Implementation of torch dataset wrapper class for MUSDB18 dataset.
 - ``fourier.py``: Short-Time Fourier Transform and Inverse Short-Time Fourier Transform.
+
+## Diagrams
+We provide diagrams of both MSTransformer and MSTU architectures for clarity.
+### MSTransformer
+![diagram of MSTransformer architecture](https://github.com/ezackr/MSTransformer/blob/main/images/MSTransformer.png?raw=true)
+### MSTU
+![diagram of MSTU architecture](https://github.com/ezackr/MSTransformer/blob/main/images/MSTU.png?raw=true)
